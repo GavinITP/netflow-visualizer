@@ -148,6 +148,20 @@
 	src: url('/fonts/roboto-v47-latin-900.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
+@theme {
+	--color-*: initial;
+	--color-white: #fff;
+	--color-black: #000;
+	--color-gray: #495464;
+	--color-blue: #dbeafe;
+	--color-green: #dcfce7;
+	--color-darkgreen: #006f26;
+	--color-yellow: #fef9c3;
+	--color-darkyellow: #645c00;
+	--color-violet: #f3e8ff;
+	--color-darkviolet: #2a0057;
+}
+
 h1,
 h2,
 h3,
@@ -159,4 +173,5 @@ h6 {
 
 body {
 	font-family: 'Roboto', sans-serif;
+	background-color: #f9f9f9;
 }
