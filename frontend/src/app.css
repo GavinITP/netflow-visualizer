@@ -4,7 +4,7 @@
 
 /* roboto-condensed-100 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 100;
@@ -12,7 +12,7 @@
 }
 /* roboto-condensed-200 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 200;
@@ -20,7 +20,7 @@
 }
 /* roboto-condensed-300 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 300;
@@ -28,7 +28,7 @@
 }
 /* roboto-condensed-regular - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 400;
@@ -36,7 +36,7 @@
 }
 /* roboto-condensed-500 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 500;
@@ -44,7 +44,7 @@
 }
 /* roboto-condensed-600 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 600;
@@ -52,7 +52,7 @@
 }
 /* roboto-condensed-700 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 700;
@@ -60,7 +60,7 @@
 }
 /* roboto-condensed-800 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 800;
@@ -68,7 +68,7 @@
 }
 /* roboto-condensed-900 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto Condensed";
   font-style: normal;
   font-weight: 900;
@@ -77,7 +77,7 @@
 
 /* roboto-100 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 100;
@@ -85,7 +85,7 @@
 }
 /* roboto-200 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 200;
@@ -93,7 +93,7 @@
 }
 /* roboto-300 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 300;
@@ -101,7 +101,7 @@
 }
 /* roboto-regular - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 400;
@@ -109,7 +109,7 @@
 }
 /* roboto-500 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 500;
@@ -117,7 +117,7 @@
 }
 /* roboto-600 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 600;
@@ -125,7 +125,7 @@
 }
 /* roboto-700 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 700;
@@ -133,7 +133,7 @@
 }
 /* roboto-800 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 800;
@@ -141,7 +141,7 @@
 }
 /* roboto-900 - latin */
 @font-face {
-  font-display: swap;
+  font-display: block;
   font-family: "Roboto";
   font-style: normal;
   font-weight: 900;
