@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Logs from "../../components/Logs.svelte";
   import StatCard from "../../components/StatCard.svelte";
 
   interface StatCardData {
@@ -52,6 +53,8 @@
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
   <div class="rounded-md bg-white p-5 shadow-md">
     <h2 class="text-xl font-semibold">Recent Database Logs</h2>
+
+    <Logs />
   </div>
 
   <div class="flex flex-col gap-6">
