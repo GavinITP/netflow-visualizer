@@ -47,9 +47,8 @@
       class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
     >
       <option value="">All</option>
-      <option value="http">HTTP</option>
-      <option value="https">HTTPS</option>
-      <option value="ftp">FTP</option>
+      <option value="http">TCP</option>
+      <option value="https">UDP</option>
     </select>
   </div>
 
