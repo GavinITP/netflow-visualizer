@@ -40,5 +40,8 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
+  },
+  "dependencies": {
+    "chart.js": "^4.4.8"
   }
 }

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import NetworkChart from "../components/NetworkChart.svelte";
+  import ProtocolChart from "../components/ProtocolChart.svelte";
   import StatCard from "../components/StatCard.svelte";
 
   interface StatCardData {
@@ -53,11 +55,15 @@
   <!-- Anomaly Network Graph -->
   <div class="h-[360px] rounded-md bg-white p-5 shadow-md">
     <h2 class="text-xl font-semibold">Anomaly Network Graph</h2>
+
+    <NetworkChart />
   </div>
 
   <!-- Protocol Distribution -->
   <div class="h-[360px] rounded-md bg-white p-5 shadow-md">
     <h2 class="text-xl font-semibold">Protocol Distribution</h2>
+
+    <ProtocolChart />
   </div>
 </section>
 
