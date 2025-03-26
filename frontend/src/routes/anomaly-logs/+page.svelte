@@ -1,4 +1,6 @@
 <script>
+  import AnomalyTable from "../../components/AnomalyTable.svelte";
+
   let ip = $state("");
   let port = $state("");
   let protocol = $state("");
@@ -80,4 +82,6 @@
 <!-- History  -->
 <div class="rounded-md bg-white p-5 shadow-md">
   <h2 class="text-xl font-semibold">History</h2>
+
+  <AnomalyTable />
 </div>

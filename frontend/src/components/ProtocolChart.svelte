@@ -24,7 +24,7 @@
           datasets: [
             {
               data: [29, 71],
-              backgroundColor: ["#A593E0", "#D6C1F0"], // Violet pastel colors
+              backgroundColor: ["#A593E0", "#D6C1F0"],
               borderColor: "#fff",
               borderWidth: 2,
             },

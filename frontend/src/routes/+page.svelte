@@ -2,6 +2,7 @@
   import NetworkChart from "../components/NetworkChart.svelte";
   import ProtocolChart from "../components/ProtocolChart.svelte";
   import StatCard from "../components/StatCard.svelte";
+  import AnomalyTable from "../components/AnomalyTable.svelte";
 
   interface StatCardData {
     title: string;
@@ -70,4 +71,6 @@
 <!-- Anomaly Network Events -->
 <div class="rounded-md bg-white p-5 shadow-md">
   <h2 class="text-xl font-semibold">Anomaly Network Events</h2>
+
+  <AnomalyTable />
 </div>
