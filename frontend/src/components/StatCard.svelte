@@ -1,0 +1,23 @@
+<script lang="ts">
+  const { title, value, iconPath, bgColor } = $props();
+
+  const formatValue = (val: string | number) => {
+    return typeof val === "number" ? new Intl.NumberFormat().format(val) : val;
+  };
+</script>
+
+<div class="w-full max-w-[400px] rounded-md bg-white p-5 shadow-md">
+  <div class="flex items-center gap-4">
+    <div
+      class="flex h-[56px] w-[56px] items-center justify-center rounded-full"
+      style={"background-color: " + bgColor}
+    >
+      <img src={iconPath} alt={title} class="h-6 w-6" />
+    </div>
+
+    <div class="flex flex-col justify-between">
+      <p class="text-gray text-sm font-bold">{title}</p>
+      <p class="text-2xl font-bold">{formatValue(value)}</p>
+    </div>
+  </div>
+</div>
