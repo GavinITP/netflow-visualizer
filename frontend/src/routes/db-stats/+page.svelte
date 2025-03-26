@@ -38,7 +38,7 @@
 
 <h1 class="mb-4 text-4xl font-extrabold">Database Statistics</h1>
 <p class="text-gray">
-  Detailed statistics from the InfluxDB time-series database
+  Monitor detailed statistics from the InfluxDB time-series database
 </p>
 
 <div
@@ -47,4 +47,20 @@
   {#each statCardData as data (data.title)}
     <StatCard {...data} />
   {/each}
+</div>
+
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+  <div class="rounded-md bg-white p-5 shadow-md">
+    <h2 class="text-xl font-semibold">Recent Database Logs</h2>
+  </div>
+
+  <div class="flex flex-col gap-6">
+    <div class="rounded-md bg-white p-5 shadow-md">
+      <h2 class="text-xl font-semibold">Query Performance</h2>
+    </div>
+
+    <div class="rounded-md bg-white p-5 shadow-md">
+      <h2 class="text-xl font-semibold">Storage Usage</h2>
+    </div>
+  </div>
 </div>
