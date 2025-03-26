@@ -48,3 +48,20 @@
     <StatCard {...data} />
   {/each}
 </div>
+
+<section class="my-10 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
+  <!-- Anomaly Network Graph -->
+  <div class="h-[360px] rounded-md bg-white p-5 shadow-md">
+    <h2 class="text-xl font-semibold">Anomaly Network Graph</h2>
+  </div>
+
+  <!-- Protocol Distribution -->
+  <div class="h-[360px] rounded-md bg-white p-5 shadow-md">
+    <h2 class="text-xl font-semibold">Protocol Distribution</h2>
+  </div>
+</section>
+
+<!-- Anomaly Network Events -->
+<div class="rounded-md bg-white p-5 shadow-md">
+  <h2 class="text-xl font-semibold">Anomaly Network Events</h2>
+</div>
