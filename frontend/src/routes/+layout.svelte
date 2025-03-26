@@ -5,7 +5,7 @@
   let { children } = $props();
 </script>
 
-<div class="flex min-h-screen bg-gray-100">
+<div class="mx-auto flex min-h-screen max-w-[1950px]">
   <Sidebar />
 
   <main class="flex-1 px-4 py-10">
