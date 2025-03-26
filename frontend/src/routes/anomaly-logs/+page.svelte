@@ -78,3 +78,6 @@
 </div>
 
 <!-- History  -->
+<div class="rounded-md bg-white p-5 shadow-md">
+  <h2 class="text-xl font-semibold">History</h2>
+</div>
