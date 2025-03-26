@@ -1,5 +1,5 @@
 <script>
-  let search = $state("");
+  let ip = $state("");
   let port = $state("");
   let protocol = $state("");
   let dateFrom = $state("");
@@ -9,7 +9,7 @@
 <h1 class="mb-4 text-4xl font-extrabold">Anomaly Traffic Logs</h1>
 <p class="text-gray">Access and analyze historical NetFlow traffic data</p>
 
-<div class="my-10 flex flex-wrap gap-4 rounded-xl bg-white p-4 shadow">
+<div class="my-10 flex flex-wrap gap-4 rounded-md bg-white p-4 shadow-md">
   <div class="flex w-full flex-wrap gap-4 md:w-full lg:w-2/5 lg:flex-nowrap">
     <!-- IP Address Input -->
     <div class="flex w-full flex-col lg:w-2/3">
@@ -17,7 +17,7 @@
       <input
         id="ip"
         type="text"
-        bind:value={search}
+        bind:value={ip}
         placeholder="Enter IP address"
         class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
       />
