@@ -6,7 +6,7 @@
   };
 </script>
 
-<div class="w-full max-w-[400px] rounded-md bg-white p-5 shadow-md">
+<div class="w-full rounded-md bg-white p-5 shadow-md sm:max-w-[400px]">
   <div class="flex items-center gap-4">
     <div
       class="flex h-[56px] w-[56px] items-center justify-center rounded-full"
