@@ -1,6 +1,8 @@
 <script lang="ts">
   import Logs from "../../components/Logs.svelte";
+  import QueryPerfTable from "../../components/QueryPerfTable.svelte";
   import StatCard from "../../components/StatCard.svelte";
+  import StorageUsageTable from "../../components/StorageUsageTable.svelte";
 
   interface StatCardData {
     title: string;
@@ -60,10 +62,14 @@
   <div class="flex flex-col gap-6">
     <div class="rounded-md bg-white p-5 shadow-md">
       <h2 class="text-xl font-semibold">Query Performance</h2>
+
+      <QueryPerfTable />
     </div>
 
     <div class="rounded-md bg-white p-5 shadow-md">
       <h2 class="text-xl font-semibold">Storage Usage</h2>
+
+      <StorageUsageTable />
     </div>
   </div>
 </div>
