@@ -6,7 +6,9 @@
   };
 </script>
 
-<div class="w-full rounded-md bg-white p-5 shadow-md sm:max-w-[400px]">
+<div
+  class="w-full transform rounded-md bg-white p-5 shadow-md transition-transform hover:scale-[1.02] sm:max-w-[400px]"
+>
   <div class="flex items-center gap-4">
     <div
       class="flex h-[56px] w-[56px] items-center justify-center rounded-full"
