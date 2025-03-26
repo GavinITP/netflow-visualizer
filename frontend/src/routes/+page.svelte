@@ -55,7 +55,7 @@
 <section class="my-10 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
   <!-- Anomaly Network Graph -->
   <div
-    class="h-[360px] rounded-md bg-white p-5 shadow-md transition-transform hover:scale-[1.01]"
+    class="h-[360px] rounded-md bg-white px-5 pb-10 pt-5 shadow-md transition-transform hover:scale-[1.01]"
   >
     <h2 class="text-xl font-semibold">Anomaly Network Graph</h2>
 
@@ -64,7 +64,7 @@
 
   <!-- Protocol Distribution -->
   <div
-    class="h-[360px] rounded-md bg-white p-5 shadow-md transition-transform hover:scale-[1.01]"
+    class="h-[360px] rounded-md bg-white px-5 pb-10 pt-5 shadow-md transition-transform hover:scale-[1.01]"
   >
     <h2 class="text-xl font-semibold">Protocol Distribution</h2>
 
