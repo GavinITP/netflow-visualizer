@@ -17,7 +17,7 @@
 </script>
 
 <aside
-  class="w-[90px] p-4 transition-all duration-300 ease-in-out lg:w-[280px]"
+  class="w-[90px] min-w-[90px] p-4 transition-all duration-300 ease-in-out lg:w-[280px]"
 >
   <div
     class="sticky top-4 flex min-h-[calc(100vh-32px)] flex-col justify-between rounded-lg bg-white shadow-md"
