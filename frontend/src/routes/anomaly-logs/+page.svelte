@@ -1,4 +1,5 @@
-<script>
+<script lang="ts">
+  import { onMount } from "svelte";
   import AnomalyTable from "../../components/AnomalyTable.svelte";
 
   let ip = $state("");
@@ -6,6 +7,31 @@
   let protocol = $state("");
   let dateFrom = $state("");
   let dateTo = $state("");
+
+  let tableData: any[] = $state([]);
+
+  async function loadTable() {
+    const params = new URLSearchParams();
+    if (ip) params.set("search", ip);
+    if (port) params.set("port", port);
+    if (protocol) params.set("search", protocol);
+    if (dateFrom) params.set("from", new Date(dateFrom).toISOString());
+    if (dateTo) params.set("to", new Date(dateTo).toISOString());
+
+    const res = await fetch(
+      `http://${import.meta.env.VITE_APP_BASE_URL}/api/netflows?${params.toString()}`,
+    );
+    if (res.ok) {
+      tableData = await res.json();
+    } else {
+      console.error("Failed to load netflows", res.status);
+      tableData = [];
+    }
+  }
+
+  onMount(() => {
+    loadTable();
+  });
 </script>
 
 <h1 class="mb-4 text-4xl font-extrabold">Anomaly Traffic Logs</h1>
@@ -21,7 +47,7 @@
         type="text"
         bind:value={ip}
         placeholder="Enter IP address"
-        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
+        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:ring focus:outline-none"
       />
     </div>
 
@@ -33,7 +59,7 @@
         type="number"
         bind:value={port}
         placeholder="Enter port number"
-        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
+        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:ring focus:outline-none"
       />
     </div>
   </div>
@@ -44,7 +70,7 @@
     <select
       id="protocol"
       bind:value={protocol}
-      class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
+      class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:ring focus:outline-none"
     >
       <option value="">All</option>
       <option value="http">TCP</option>
@@ -61,7 +87,7 @@
         id="dateFrom"
         type="date"
         bind:value={dateFrom}
-        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
+        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:ring focus:outline-none"
       />
     </div>
 
@@ -72,7 +98,7 @@
         id="dateTo"
         type="date"
         bind:value={dateTo}
-        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:outline-none focus:ring"
+        class="rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-300 focus:ring focus:outline-none"
       />
     </div>
   </div>
@@ -82,5 +108,5 @@
 <div class="rounded-md bg-white p-5 shadow-md">
   <h2 class="text-xl font-semibold">History</h2>
 
-  <AnomalyTable />
+  <AnomalyTable {tableData} />
 </div>

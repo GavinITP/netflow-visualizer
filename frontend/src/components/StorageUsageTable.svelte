@@ -1,8 +1,10 @@
 <script lang="ts">
-  const metrics = [
-    { label: "Disk Space Used (Bytes)", value: "5242880000" },
-    { label: "Index Size (Bytes)", value: "104857600" },
-  ];
+  let { status } = $props();
+
+  let metrics = $derived([
+    { label: "Status", value: status.toUpperCase() },
+    { label: "Last Check Date", value: "April 16, 2025 at 09:45 AM" },
+  ]);
 </script>
 
 <div

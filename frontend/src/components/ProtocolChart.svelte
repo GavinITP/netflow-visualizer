@@ -9,45 +9,61 @@
     Title,
   } from "chart.js";
 
+  let { protocolData } = $props<{ protocolData: Record<string, number> }>();
+
+  let labels = $derived(Object.keys(protocolData));
+  let values = $derived(
+    Object.values(protocolData).map((v) => Math.round(Number(v) * 100)),
+  );
+
+  const baseColors = ["#A593E0", "#D6C1F0"];
+
+  let colors = $derived(
+    labels.map((_, i, arr) =>
+      baseColors[i]
+        ? baseColors[i]
+        : `hsl(${(i * 360) / arr.length}, 70%, 60%)`,
+    ),
+  );
+
   let canvas: HTMLCanvasElement;
+  let chart: Chart;
 
   onMount(() => {
     Chart.register(PieController, ArcElement, Tooltip, Legend, Title);
-
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    if (ctx) {
-      const chart = new Chart(ctx, {
-        type: "pie",
-        data: {
-          labels: ["TCP", "UDP"],
-          datasets: [
-            {
-              data: [29, 71],
-              backgroundColor: ["#A593E0", "#D6C1F0"],
-              borderColor: "#fff",
-              borderWidth: 2,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              font: {
-                size: 18,
-              },
-            },
-            legend: {
-              position: "bottom",
-            },
+    chart = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors,
+            borderColor: "#fff",
+            borderWidth: 2,
           },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" },
         },
-      });
+      },
+    });
 
-      return () => chart.destroy();
-    }
+    return () => chart.destroy();
+  });
+
+  $effect(() => {
+    if (!chart) return;
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+    chart.data.datasets[0].backgroundColor = colors;
+    chart.update();
   });
 </script>
 
