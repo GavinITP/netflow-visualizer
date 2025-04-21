@@ -1,9 +1,9 @@
 <script lang="ts">
-  let { status } = $props();
+  let { status, lastCheckDate } = $props();
 
   let metrics = $derived([
     { label: "Status", value: status.toUpperCase() },
-    { label: "Last Check Date", value: "April 16, 2025 at 09:45 AM" },
+    { label: "Last Check Date", value: lastCheckDate },
   ]);
 </script>
 

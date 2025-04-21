@@ -39,6 +39,7 @@
     open_connections: 0,
   };
   let error: string | null = null;
+  let lastCheckDate = "";
 
   onMount(() => {
     const ws = new WebSocket(`ws://${BASE}/api/db-stats`);
@@ -50,6 +51,15 @@
     ws.addEventListener("message", (e) => {
       try {
         stats = JSON.parse(e.data) as DBStats;
+        lastCheckDate = new Date().toLocaleString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
         error = null;
       } catch {
         error = "Failed to parse DB stats";
@@ -157,7 +167,7 @@
     <div class="rounded-md bg-white p-5 shadow-md">
       <h2 class="text-xl font-semibold">Integrity Check</h2>
 
-      <StorageUsageTable status={integrityStatus} />
+      <StorageUsageTable status={integrityStatus} {lastCheckDate} />
     </div>
   </div>
 </div>
