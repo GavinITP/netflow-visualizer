@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +17,7 @@ import (
 
 func GetNetflowsFromDBFilePath(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+
 		var fileRecord models.FilePath
 		if err := db.First(&fileRecord).Error; err != nil {
 			return c.Status(http.StatusInternalServerError).
@@ -26,6 +28,7 @@ func GetNetflowsFromDBFilePath(db *gorm.DB) fiber.Handler {
 		portStr := c.Query("port")
 		fromStr := c.Query("from")
 		toStr := c.Query("to")
+		protocol := c.Query("protocol")
 		limitStr := c.Query("limit")
 
 		var portFilter int
@@ -105,10 +108,14 @@ func GetNetflowsFromDBFilePath(db *gorm.DB) fiber.Handler {
 				Tos:       tos,
 			}
 
+			// Apply filters
 			if search != "" && flow.SrcAddr != search && flow.DstAddr != search {
 				continue
 			}
 			if portFilter != 0 && flow.SrcPort != portFilter && flow.DstPort != portFilter {
+				continue
+			}
+			if protocol != "" && !strings.EqualFold(flow.Prot, protocol) {
 				continue
 			}
 			if !fromTime.IsZero() && flow.Timestamp.Before(fromTime) {
