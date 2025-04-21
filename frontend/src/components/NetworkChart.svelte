@@ -12,7 +12,9 @@
     Legend,
   } from "chart.js";
 
+  export let packetHistory: { time: string; count: number }[] = [];
   let canvas: HTMLCanvasElement;
+  let chart: Chart;
 
   onMount(() => {
     Chart.register(
@@ -25,64 +27,57 @@
       Tooltip,
       Legend,
     );
-
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    if (ctx) {
-      const chart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: [
-            "11:00:00",
-            "11:00:01",
-            "11:00:02",
-            "11:00:03",
-            "11:00:04",
-            "11:00:05",
-            "11:00:06",
-            "11:00:07",
-            "11:00:08",
-            "11:00:09",
-          ],
-          datasets: [
-            {
-              label: "Packets",
-              data: [12, 19, 3, 5, 0, 0, 0, 1, 1, 2],
-              borderColor: "#9494ff",
-              tension: 0.2,
-              fill: false,
-            },
-          ],
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: packetHistory.map((p) => p.time),
+        datasets: [
+          {
+            label: "Packets",
+            data: packetHistory.map((p) => p.count),
+            borderColor: "#9494ff",
+            tension: 0.2,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: "Anomaly Packets Over Time",
+          },
+          tooltip: { enabled: true },
+          legend: { display: false },
         },
-        options: {
-          responsive: true,
-          plugins: {
+        scales: {
+          x: {
             title: {
               display: true,
-              text: "Anomaly Packets Over Time",
+              text: "Time (HH:MM:SS)",
             },
           },
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: "Time (HH:MM:SS)",
-              },
-            },
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: "Packet Count",
-              },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: "Packet Rate",
             },
           },
         },
-      });
-
-      return () => chart.destroy();
-    }
+      },
+    });
   });
+
+  $: if (chart) {
+    chart.data.labels = packetHistory.map((p) => p.time);
+    chart.data.datasets[0].data = packetHistory.map((p) => p.count);
+    chart.update();
+  }
 </script>
 
 <div class="flex h-full w-full justify-center">

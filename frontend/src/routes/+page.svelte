@@ -1,10 +1,9 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import NetworkChart from "../components/NetworkChart.svelte";
   import ProtocolChart from "../components/ProtocolChart.svelte";
   import StatCard from "../components/StatCard.svelte";
   import AnomalyTable from "../components/AnomalyTable.svelte";
-
-  import { onMount } from "svelte";
 
   const BASE = import.meta.env.VITE_APP_BASE_URL;
 
@@ -12,20 +11,9 @@
     total_packets: number;
     packets_per_second: number;
     active_alert: number;
-    uptime: {
-      hours: number;
-      minutes: number;
-      seconds: number;
-    };
+    uptime: { hours: number; minutes: number; seconds: number };
     protocol_distribution: Record<string, number>;
   };
-
-  interface StatCardData {
-    title: string;
-    value: number | string;
-    iconPath: string;
-    bgColor: string;
-  }
 
   let stats: NetflowStats = {
     total_packets: 0,
@@ -34,27 +22,35 @@
     uptime: { hours: 0, minutes: 0, seconds: 0 },
     protocol_distribution: {},
   };
-
   let error: string | null = null;
 
-  let protocolData: Record<string, number> = {};
+  let packetHistory: { time: string; count: number }[] = [];
 
   let netflows: any[] = [];
 
   onMount(() => {
-    const ws = new WebSocket(`ws://${BASE}/api/netflow-stats`);
     fetch(`http://${BASE}/api/netflows`)
       .then((res) => res.json())
       .then((data) => {
         netflows = data;
-        console.log("netflows", data);
       })
       .catch(() => {});
+
+    const ws = new WebSocket(`ws://${BASE}/api/netflow-stats`);
 
     ws.addEventListener("message", (e) => {
       try {
         stats = JSON.parse(e.data);
         error = null;
+
+        const now = new Date().toLocaleTimeString();
+        packetHistory = [
+          ...packetHistory,
+          {
+            time: now,
+            count: stats.packets_per_second,
+          },
+        ].slice(-10);
       } catch {
         error = "Malformed stats data";
       }
@@ -64,12 +60,15 @@
       error = "WebSocket error";
     });
 
-    return () => {
-      ws.close();
-    };
+    return () => ws.close();
   });
 
-  let statCardData: StatCardData[];
+  interface StatCardData {
+    title: string;
+    value: number | string;
+    iconPath: string;
+    bgColor: string;
+  }
 
   $: statCardData = [
     {
@@ -92,9 +91,7 @@
     },
     {
       title: "Uptime",
-      value: `${stats.uptime.hours
-        .toString()
-        .padStart(2, "0")}:${stats.uptime.minutes
+      value: `${stats.uptime.hours.toString().padStart(2, "0")}:${stats.uptime.minutes
         .toString()
         .padStart(2, "0")}:${stats.uptime.seconds.toString().padStart(2, "0")}`,
       iconPath: "/uptime.svg",
@@ -125,7 +122,7 @@
   >
     <h2 class="text-xl font-semibold">Anomaly Network Graph</h2>
 
-    <NetworkChart />
+    <NetworkChart {packetHistory} />
   </div>
 
   <!-- Protocol Distribution -->

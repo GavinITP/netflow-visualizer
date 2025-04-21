@@ -40,6 +40,6 @@
 {:else}
   <pre
     class="mt-4 max-h-[450px] overflow-scroll rounded-xl font-mono text-sm break-words whitespace-pre-wrap text-gray-800">
-    <code class="language-log">{recentLogs}</code>
+    <code class="">{recentLogs}</code>
   </pre>
 {/if}
