@@ -1,4 +1,3 @@
-// controllers/netflow_stats_controller.go
 package controllers
 
 import (
@@ -75,11 +74,8 @@ func GetNetflowStatsFromDB(db *gorm.DB) fiber.Handler {
 			conn.Close()
 			return
 		}
-		var initialTotal uint64
-		for _, nf := range initialRows {
-			initialTotal += nf.DPkts
-		}
-		prevTotal := initialTotal
+		initialCount := len(initialRows)
+		prevCount := initialCount
 
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
@@ -98,15 +94,15 @@ func GetNetflowStatsFromDB(db *gorm.DB) fiber.Handler {
 				protCounts[nf.Prot]++
 			}
 
-			packetsPerSec := totalPkts - prevTotal
-			prevTotal = totalPkts
-
-			activeAlerts := totalPkts - initialTotal
+			currentCount := len(rows)
+			packetsPerSec := currentCount - prevCount
+			prevCount = currentCount
+			activeAlerts := currentCount - initialCount
 
 			protoDist := make(map[string]float64, len(protCounts))
-			if len(rows) > 0 {
+			if currentCount > 0 {
 				for p, cnt := range protCounts {
-					protoDist[p] = float64(cnt) / float64(len(rows))
+					protoDist[p] = float64(cnt) / float64(currentCount)
 				}
 			}
 
