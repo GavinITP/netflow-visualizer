@@ -117,8 +117,8 @@
     {
       title: "Open Connections",
       value: openConnections,
-      iconPath: "/policy.svg",
-      bgColor: "#FEF9C3",
+      iconPath: "/connection.svg",
+      bgColor: "#F3E8FF",
     },
   ];
 </script>

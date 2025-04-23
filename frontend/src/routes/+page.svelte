@@ -72,7 +72,7 @@
 
   $: statCardData = [
     {
-      title: "Total Packets",
+      title: "Total Packets (dPkts)",
       value: stats.total_packets,
       iconPath: "/total-packets.svg",
       bgColor: "#DBEAFE",
