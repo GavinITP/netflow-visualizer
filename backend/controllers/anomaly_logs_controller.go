@@ -17,121 +17,173 @@ import (
 
 func GetNetflowsFromDBFilePath(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-
-		var fileRecord models.FilePath
-		if err := db.First(&fileRecord).Error; err != nil {
-			return c.Status(http.StatusInternalServerError).
-				JSON(fiber.Map{"error": "CSV file path not found"})
-		}
-
 		search := c.Query("search")
-		portStr := c.Query("port")
-		fromStr := c.Query("from")
-		toStr := c.Query("to")
-		protocol := c.Query("protocol")
-		limitStr := c.Query("limit")
+		portFilter := 0
+		if portStr := c.Query("port"); portStr != "" {
+			p, err := strconv.Atoi(portStr)
+			if err != nil {
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid port"})
+			}
+			portFilter = p
+		}
 
-		var portFilter int
-		if portStr != "" {
-			if p, err := strconv.Atoi(portStr); err == nil {
-				portFilter = p
+		protoParam := strings.ToUpper(c.Query("protocol"))
+		validProtos := map[string]bool{"TCP": true, "UDP": true, "ICMP": true, "OTHERS": true}
+		if protoParam != "" && !validProtos[protoParam] {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid protocol"})
+		}
+
+		var recs []models.FileRecord
+		if err := db.Order("id desc").Find(&recs).Error; err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "db query failed: " + err.Error()})
+		}
+
+		var selected []models.FileRecord
+		recentCountStr := c.Query("recent_count")
+		if recentCountStr == "" {
+			countAnoms := 0
+			for _, r := range recs {
+				if strings.Contains(r.FileName, "/netflow/") {
+					selected = append(selected, r)
+					countAnoms++
+					if countAnoms >= 20 {
+						break
+					}
+				}
+			}
+		} else {
+			recentCount, err := strconv.ParseUint(recentCountStr, 10, 64)
+			if err != nil {
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid recent_count"})
+			}
+			var sumCount uint64
+			for _, r := range recs {
+				if !strings.Contains(r.FileName, "/netflow/") {
+					continue
+				}
+				selected = append(selected, r)
+				sumCount += r.Count
+				if sumCount >= recentCount {
+					break
+				}
+			}
+			if sumCount < recentCount || len(selected) < 20 {
+				selected = nil
+				countAnoms := 0
+				for _, r := range recs {
+					if strings.Contains(r.FileName, "/netflow/") {
+						selected = append(selected, r)
+						countAnoms++
+						if countAnoms >= 20 {
+							break
+						}
+					}
+				}
 			}
 		}
 
-		var fromTime, toTime time.Time
-		if fromStr != "" {
-			if t, err := time.Parse(time.RFC3339, fromStr); err == nil {
-				fromTime = t
-			} else {
-				return c.Status(http.StatusBadRequest).
-					JSON(fiber.Map{"error": "invalid from timestamp"})
+		var flows []models.AnomalyNetflow
+		for _, rec := range selected {
+			f, err := os.Open(rec.FileName)
+			if err != nil {
+				continue
 			}
-		}
-		if toStr != "" {
-			if t, err := time.Parse(time.RFC3339, toStr); err == nil {
-				toTime = t
-			} else {
-				return c.Status(http.StatusBadRequest).
-					JSON(fiber.Map{"error": "invalid to timestamp"})
-			}
-		}
-
-		var limit int
-		if limitStr != "" {
-			if n, err := strconv.Atoi(limitStr); err == nil && n > 0 {
-				limit = n
-			}
-		}
-
-		f, err := os.Open(fileRecord.Path)
-		if err != nil {
-			return c.Status(http.StatusInternalServerError).
-				JSON(fiber.Map{"error": "Unable to open CSV file"})
-		}
-		defer f.Close()
-
-		r := csv.NewReader(f)
-		if _, err := r.Read(); err != nil {
-			return c.Status(http.StatusInternalServerError).
-				JSON(fiber.Map{"error": "Failed to read CSV header"})
-		}
-
-		var netflows []models.Netflow
-		for {
-			row, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil || len(row) != 11 {
+			r := csv.NewReader(f)
+			if _, err := r.Read(); err != nil {
+				f.Close()
 				continue
 			}
 
-			id, _ := strconv.ParseUint(row[0], 10, 32)
-			ts, _ := time.Parse(time.RFC3339, row[1])
-			dPkts, _ := strconv.ParseUint(row[5], 10, 64)
-			dOctets, _ := strconv.ParseUint(row[6], 10, 64)
-			srcPort, _ := strconv.Atoi(row[7])
-			dstPort, _ := strconv.Atoi(row[8])
-			tos, _ := strconv.Atoi(row[10])
+			for {
+				row, err := r.Read()
+				if err == io.EOF {
+					break
+				}
+				if err != nil || len(row) < 18 {
+					continue
+				}
 
-			flow := models.Netflow{
-				ID:        uint(id),
-				Timestamp: ts,
-				SrcAddr:   row[2],
-				DstAddr:   row[3],
-				NextHop:   row[4],
-				DPkts:     dPkts,
-				DOctets:   dOctets,
-				SrcPort:   srcPort,
-				DstPort:   dstPort,
-				Prot:      row[9],
-				Tos:       tos,
-			}
+				input, _ := strconv.Atoi(row[3])
+				output, _ := strconv.Atoi(row[4])
+				dPkts, _ := strconv.ParseUint(row[5], 10, 64)
+				dOctets, _ := strconv.ParseUint(row[6], 10, 64)
 
-			// Apply filters
-			if search != "" && flow.SrcAddr != search && flow.DstAddr != search {
-				continue
-			}
-			if portFilter != 0 && flow.SrcPort != portFilter && flow.DstPort != portFilter {
-				continue
-			}
-			if protocol != "" && !strings.EqualFold(flow.Prot, protocol) {
-				continue
-			}
-			if !fromTime.IsZero() && flow.Timestamp.Before(fromTime) {
-				continue
-			}
-			if !toTime.IsZero() && flow.Timestamp.After(toTime) {
-				continue
-			}
+				var firstTime, lastTime time.Time
+				if t, err := time.Parse(time.RFC3339, row[7]); err == nil {
+					firstTime = t
+				} else if secs, err2 := strconv.ParseInt(row[7], 10, 64); err2 == nil {
+					firstTime = time.Unix(secs, 0)
+				}
+				if t2, err := time.Parse(time.RFC3339, row[8]); err == nil {
+					lastTime = t2
+				} else if secs2, err2 := strconv.ParseInt(row[8], 10, 64); err2 == nil {
+					lastTime = time.Unix(secs2, 0)
+				}
 
-			netflows = append(netflows, flow)
+				srcPort, _ := strconv.Atoi(row[9])
+				dstPort, _ := strconv.Atoi(row[10])
+				tcpFlags := row[11]
+				protCode, _ := strconv.Atoi(row[12])
+				tosVal, _ := strconv.Atoi(row[13])
+				srcAS, _ := strconv.Atoi(row[14])
+				dstAS, _ := strconv.Atoi(row[15])
+				srcMask, _ := strconv.Atoi(row[16])
+				dstMask, _ := strconv.Atoi(row[17])
+
+				if protoParam != "" {
+					switch protoParam {
+					case "TCP":
+						if protCode != 6 {
+							continue
+						}
+					case "UDP":
+						if protCode != 17 {
+							continue
+						}
+					case "ICMP":
+						if protCode != 1 {
+							continue
+						}
+					case "OTHERS":
+						if protCode == 6 || protCode == 17 || protCode == 1 {
+							continue
+						}
+					}
+				}
+
+				if search != "" && row[0] != search && row[1] != search {
+					continue
+				}
+				if portFilter != 0 && srcPort != portFilter && dstPort != portFilter {
+					continue
+				}
+
+				flows = append(flows, models.AnomalyNetflow{
+					BaseNetflow: models.BaseNetflow{
+						SrcAddr: row[0],
+						DstAddr: row[1],
+						NextHop: row[2],
+						DPkts:   dPkts,
+						DOctets: dOctets,
+						SrcPort: srcPort,
+						DstPort: dstPort,
+						Prot:    row[12],
+						Tos:     tosVal,
+					},
+					Input:    input,
+					Output:   output,
+					First:    firstTime,
+					Last:     lastTime,
+					TCPFlags: tcpFlags,
+					SrcAS:    srcAS,
+					DstAS:    dstAS,
+					SrcMask:  srcMask,
+					DstMask:  dstMask,
+				})
+			}
+			f.Close()
 		}
 
-		if limit > 0 && len(netflows) > limit {
-			netflows = netflows[len(netflows)-limit:]
-		}
-
-		return c.JSON(netflows)
+		return c.JSON(flows)
 	}
 }
