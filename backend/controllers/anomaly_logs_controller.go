@@ -15,7 +15,7 @@ import (
 	"netflow-visualizer/models"
 )
 
-func GetNetflowsFromDBFilePath(db *gorm.DB) fiber.Handler {
+func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		search := c.Query("search")
 		portFilter := 0

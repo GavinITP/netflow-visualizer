@@ -11,9 +11,7 @@ import (
 	"netflow-visualizer/models"
 )
 
-var serverStartTime = time.Now()
-
-func GetNetflowStatsFromDB(db *gorm.DB) fiber.Handler {
+func GetOverviewStats(db *gorm.DB) fiber.Handler {
 	return websocket.New(func(conn *websocket.Conn) {
 		for {
 			var recs []models.FileRecord
