@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"netflow-visualizer/models"
 	"netflow-visualizer/routes"
 )
 
@@ -22,18 +21,7 @@ func main() {
 	}
 
 	dbPath := os.Getenv("DB_FILE_PATH")
-	if dbPath == "" {
-		dbPath = "./database/file_paths.db"
-	}
-
 	logsPath := os.Getenv("LOGS_FILE_PATH")
-	if logsPath == "" {
-		logsPath = "./logs/gorm.log"
-	}
-
-	if err := os.MkdirAll("./database", os.ModePerm); err != nil {
-		log.Fatal("Failed to create database directory:", err)
-	}
 
 	logFile, err := os.OpenFile(logsPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
@@ -58,10 +46,6 @@ func main() {
 		log.Fatal("Failed to connect to the database:", err)
 	}
 
-	if err := db.AutoMigrate(&models.FilePath{}); err != nil {
-		log.Fatal("Failed to migrate database schema:", err)
-	}
-
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:5173",
@@ -73,9 +57,6 @@ func main() {
 	routes.SetupRoutes(app, db)
 
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000"
-	}
 
 	log.Fatal(app.Listen(":" + port))
 }

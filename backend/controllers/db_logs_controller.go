@@ -10,7 +10,10 @@ import (
 	"github.com/gofiber/websocket/v2"
 )
 
-func GetRecentLogs(logFilePath string, n int) fiber.Handler {
+func GetRecentLogs() fiber.Handler {
+	logFilePath := os.Getenv("LOGS_FILE_PATH")
+	n := 50
+
 	return websocket.New(func(conn *websocket.Conn) {
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
