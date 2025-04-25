@@ -80,6 +80,6 @@
   }
 </script>
 
-<div class="flex h-full w-full justify-center">
+<div class="flex h-full w-full items-center justify-center">
   <canvas bind:this={canvas} class="h-full w-full"></canvas>
 </div>

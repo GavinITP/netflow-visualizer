@@ -12,7 +12,7 @@ import (
 
 func GetRecentLogs(logFilePath string, n int) fiber.Handler {
 	return websocket.New(func(conn *websocket.Conn) {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 
 		for {

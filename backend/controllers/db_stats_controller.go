@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"os"
 	"path/filepath"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 
 func GetDBStats(db *gorm.DB) fiber.Handler {
 	return websocket.New(func(c *websocket.Conn) {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		for {
 			<-ticker.C
@@ -30,8 +31,9 @@ func GetDBStats(db *gorm.DB) fiber.Handler {
 			db.Raw("PRAGMA integrity_check").Scan(&integrityCheck)
 
 			dbSize := pageSize * pageCount
+			dbFilePath := os.Getenv("DB_FILE_PATH")
 
-			absPath, err := filepath.Abs("./database/netflow.db")
+			absPath, err := filepath.Abs(dbFilePath)
 			if err != nil {
 				absPath = "Error: " + err.Error()
 			}

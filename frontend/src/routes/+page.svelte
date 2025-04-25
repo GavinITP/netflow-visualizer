@@ -20,7 +20,12 @@
     packets_per_second: 0,
     active_alert: 0,
     uptime: { hours: 0, minutes: 0, seconds: 0 },
-    protocol_distribution: {},
+    protocol_distribution: {
+      TCP: 200000,
+      UDP: 150000,
+      ICMP: 50000,
+      Others: 10000,
+    },
   };
   let error: string | null = null;
 
@@ -118,7 +123,7 @@
 <section class="my-10 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
   <!-- Anomaly Network Graph -->
   <div
-    class="h-[360px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
+    class="h-[500px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
   >
     <h2 class="text-xl font-semibold">Anomaly Network Graph</h2>
 
@@ -127,17 +132,10 @@
 
   <!-- Protocol Distribution -->
   <div
-    class="h-[360px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
+    class="h-[500px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
   >
     <h2 class="text-xl font-semibold">Protocol Distribution</h2>
 
     <ProtocolChart {protocolData} />
   </div>
 </section>
-
-<!-- Anomaly Network Events -->
-<div class="rounded-md bg-white p-5 shadow-md">
-  <h2 class="text-xl font-semibold">Anomaly Network Events</h2>
-
-  <AnomalyTable tableData={netflows.slice(0, 10)} />
-</div>

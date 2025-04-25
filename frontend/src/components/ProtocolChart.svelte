@@ -16,14 +16,10 @@
     Object.values(protocolData).map((v) => Math.round(Number(v) * 100)),
   );
 
-  const baseColors = ["#A593E0", "#D6C1F0"];
+  const baseColors = ["#A593E0", "#FFC1F0", "#F0B3C7", "#FFDA91"];
 
   let colors = $derived(
-    labels.map((_, i, arr) =>
-      baseColors[i]
-        ? baseColors[i]
-        : `hsl(${(i * 360) / arr.length}, 70%, 60%)`,
-    ),
+    labels.map((_, i) => baseColors[i % baseColors.length]),
   );
 
   let canvas: HTMLCanvasElement;
@@ -67,6 +63,6 @@
   });
 </script>
 
-<div class="flex h-full w-full justify-center">
+<div class="flex h-full w-full justify-center py-5">
   <canvas bind:this={canvas} class="h-full w-full"></canvas>
 </div>

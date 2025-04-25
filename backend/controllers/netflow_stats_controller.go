@@ -77,7 +77,7 @@ func GetNetflowStatsFromDB(db *gorm.DB) fiber.Handler {
 		initialCount := len(initialRows)
 		prevCount := initialCount
 
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 
 		for range ticker.C {
