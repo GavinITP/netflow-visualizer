@@ -16,19 +16,14 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, falling back to defaults")
-	}
+	godotenv.Load()
 
-	dbPath := os.Getenv("DB_FILE_PATH")
 	logsPath := os.Getenv("LOGS_FILE_PATH")
-
 	logFile, err := os.OpenFile(logsPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Failed to open log file:", err)
 	}
 	defer logFile.Close()
-
 	newLogger := logger.New(
 		log.New(logFile, "\r\n", log.LstdFlags),
 		logger.Config{
@@ -39,6 +34,7 @@ func main() {
 		},
 	)
 
+	dbPath := os.Getenv("DB_FILE_PATH")
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: newLogger,
 	})
@@ -53,10 +49,8 @@ func main() {
 		AllowMethods:     "GET,POST,OPTIONS",
 		AllowCredentials: true,
 	}))
-
 	routes.SetupRoutes(app, db)
 
 	port := os.Getenv("PORT")
-
 	log.Fatal(app.Listen(":" + port))
 }
