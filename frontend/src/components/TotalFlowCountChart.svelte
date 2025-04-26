@@ -12,7 +12,6 @@
     Legend,
   } from "chart.js";
 
-  // Register necessary components
   Chart.register(
     BarController,
     BarElement,
@@ -23,11 +22,8 @@
     Legend,
   );
 
-  // Sample data: recent 5 flow counts
   export let packetHistory: { time: string; count: number }[];
-  $: console.log(packetHistory);
 
-  // Chart.js data and configuration
   const data: ChartConfiguration<"bar">["data"] = {
     labels: packetHistory.map((p) => p.time),
     datasets: [
@@ -84,7 +80,6 @@
     }
   });
 
-  // Update on data change
   $: if (chart) {
     chart.data.labels = packetHistory.map((p) => p.time);
     chart.data.datasets[0].data = packetHistory.map((p) => p.count);

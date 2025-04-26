@@ -26,9 +26,9 @@ var (
 func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
-		// parse query params
 		search := c.Query("search")
 		searchB := []byte(search)
+
 		portFilter := 0
 		if ps := c.Query("port"); ps != "" {
 			p, err := strconv.Atoi(ps)
@@ -37,6 +37,7 @@ func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 			}
 			portFilter = p
 		}
+
 		protoParam := strings.ToUpper(c.Query("protocol"))
 		if protoParam != "" {
 			switch protoParam {
@@ -46,7 +47,6 @@ func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 			}
 		}
 
-		// load file_records
 		var recs []models.FileRecord
 		if err := db.Order("id desc").Find(&recs).Error; err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "db query failed"})
@@ -54,7 +54,6 @@ func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 
 		selected := selectAnomalyFiles(recs, c.Query("recent_count"))
 
-		// parallel parse
 		numCPU := runtime.NumCPU()
 		sem := make(chan struct{}, numCPU)
 		outCh := make(chan []models.AnomalyNetflow, len(selected))
@@ -66,19 +65,24 @@ func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 			go func(fn string) {
 				defer wg.Done()
 				defer func() { <-sem }()
-				flows := parseFile(fn, searchB, portFilter, protoParam)
-				outCh <- flows
+				outCh <- parseFile(fn, searchB, portFilter, protoParam)
 			}(rec.FileName)
 		}
 		wg.Wait()
 		close(outCh)
 
-		// collect
 		all := make([]models.AnomalyNetflow, 0, len(selected)*1024)
 		for fs := range outCh {
 			all = append(all, fs...)
 			flowPool.Put(fs[:0])
 		}
+
+		if rc := c.Query("recent_count"); rc != "" {
+			if limit, err := strconv.Atoi(rc); err == nil && limit > 0 && len(all) > limit {
+				all = all[:limit]
+			}
+		}
+
 		return c.JSON(all)
 	}
 }
@@ -93,7 +97,7 @@ func selectAnomalyFiles(recs []models.FileRecord, recentCountStr string) []model
 		}
 		return sel
 	}
-	// recent_count logic omitted for brevity, fallback to above
+
 	return selectAnomalyFiles(recs, "")
 }
 
@@ -109,7 +113,6 @@ func parseFile(filename string, searchB []byte, portFilter int, protoParam strin
 	buf := lineBufPool.Get().([]byte)
 	defer lineBufPool.Put(buf[:0])
 
-	// skip header
 	if _, err := rdr.ReadBytes('\n'); err != nil {
 		return flows
 	}
@@ -125,7 +128,6 @@ func parseFile(filename string, searchB []byte, portFilter int, protoParam strin
 
 		buf = append(buf[:0], line...)
 
-		// split 18 fields
 		var flds [18][]byte
 		start := 0
 		valid := true
@@ -143,7 +145,6 @@ func parseFile(filename string, searchB []byte, portFilter int, protoParam strin
 		}
 		flds[17] = buf[start:]
 
-		// early filters
 		if len(searchB) > 0 && !bytes.Equal(flds[0], searchB) && !bytes.Equal(flds[1], searchB) {
 			continue
 		}
@@ -174,7 +175,6 @@ func parseFile(filename string, searchB []byte, portFilter int, protoParam strin
 			}
 		}
 
-		// parse remaining
 		iVal, _ := strconv.Atoi(string(flds[3]))
 		oVal, _ := strconv.Atoi(string(flds[4]))
 		dPkts, _ := strconv.ParseUint(string(flds[5]), 10, 64)

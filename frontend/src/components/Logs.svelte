@@ -8,9 +8,7 @@
   onMount(() => {
     const ws = new WebSocket(`ws://${BASE}/api/db-logs`);
 
-    ws.addEventListener("open", () => {
-      console.log("Connected to ws://" + BASE + "/api/db-logs");
-    });
+    ws.addEventListener("open", () => {});
 
     ws.addEventListener("message", (e) => {
       try {

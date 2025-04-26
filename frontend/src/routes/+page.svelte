@@ -34,9 +34,7 @@
         netflows = JSON.parse(e.data);
       } catch {}
     });
-    netflowWs.addEventListener("error", () => {
-      console.error("Netflows WebSocket error");
-    });
+    netflowWs.addEventListener("error", () => {});
 
     const overviewWs = new WebSocket(`ws://${BASE}/api/overview`);
     overviewWs.addEventListener("message", (e) => {
@@ -89,19 +87,19 @@
     {
       title: "Total Bytes (dOctets)",
       value: stats.total_bytes,
-      iconPath: "/traffic-rate.svg",
+      iconPath: "/total-bytes.svg",
       bgColor: "#DCFCE7",
     },
     {
       title: "Total Flow Count",
       value: stats.total_flow_count,
-      iconPath: "",
+      iconPath: "total-flow-count.svg",
       bgColor: "#FEF9C3",
     },
     {
       title: "Anomaly Flow Count",
       value: stats.anomaly_flow_count,
-      iconPath: "",
+      iconPath: "/anomaly-flow-count.svg",
       bgColor: "#F3E8FF",
     },
   ];

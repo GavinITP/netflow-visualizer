@@ -27,7 +27,7 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 		var lastRsp []FlowHistoryEntry
 
 		send := func() error {
-			// 1. Get latest record
+
 			var latestRec struct {
 				FileName string
 				Count    uint64
@@ -41,7 +41,6 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 				return err
 			}
 
-			// parse latest timestamp
 			base := filepath.Base(latestRec.FileName)
 			name := strings.TrimSuffix(base, filepath.Ext(base))
 			parts := strings.SplitN(name, "_", 2)
@@ -52,7 +51,6 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 				}
 			}
 
-			// 2. Get previous 9 records before latest
 			var recs []struct {
 				FileName string
 				Count    uint64
@@ -66,7 +64,6 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 				return err
 			}
 
-			// 3. Build map of timestamps to counts
 			counts := make(map[int64]uint64, len(recs)+1)
 			counts[latestTs.Unix()] = latestRec.Count
 			for _, r := range recs {
@@ -81,7 +78,6 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 				}
 			}
 
-			// 4. Generate fixed 10-second window
 			start := latestTs.Add(-9 * time.Second)
 			rsp := make([]FlowHistoryEntry, 0, 10)
 			for i := 0; i < 10; i++ {
@@ -92,7 +88,6 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 				})
 			}
 
-			// 5. Send only if changed
 			if reflect.DeepEqual(rsp, lastRsp) {
 				return nil
 			}
@@ -100,7 +95,6 @@ func GetFlowHistory(db *gorm.DB) fiber.Handler {
 			return conn.WriteJSON(rsp)
 		}
 
-		// initial send & periodic updates
 		if err := send(); err != nil {
 			conn.Close()
 			return

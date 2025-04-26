@@ -44,9 +44,7 @@
   onMount(() => {
     const ws = new WebSocket(`ws://${BASE}/api/db-stats`);
 
-    ws.addEventListener("open", () => {
-      console.log("Connected to ws://" + BASE + "/api/db-stats");
-    });
+    ws.addEventListener("open", () => {});
 
     ws.addEventListener("message", (e) => {
       try {
