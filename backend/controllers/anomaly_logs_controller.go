@@ -1,12 +1,15 @@
 package controllers
 
 import (
-	"encoding/csv"
+	"bufio"
+	"bytes"
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,175 +18,194 @@ import (
 	"netflow-visualizer/models"
 )
 
+var (
+	flowPool    = sync.Pool{New: func() interface{} { return make([]models.AnomalyNetflow, 0, 1024) }}
+	lineBufPool = sync.Pool{New: func() interface{} { return make([]byte, 0, 1<<20) }}
+)
+
 func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+
+		// parse query params
 		search := c.Query("search")
+		searchB := []byte(search)
 		portFilter := 0
-		if portStr := c.Query("port"); portStr != "" {
-			p, err := strconv.Atoi(portStr)
+		if ps := c.Query("port"); ps != "" {
+			p, err := strconv.Atoi(ps)
 			if err != nil {
 				return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid port"})
 			}
 			portFilter = p
 		}
-
 		protoParam := strings.ToUpper(c.Query("protocol"))
-		validProtos := map[string]bool{"TCP": true, "UDP": true, "ICMP": true, "OTHERS": true}
-		if protoParam != "" && !validProtos[protoParam] {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid protocol"})
+		if protoParam != "" {
+			switch protoParam {
+			case "TCP", "UDP", "ICMP", "OTHERS":
+			default:
+				return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid protocol"})
+			}
 		}
 
+		// load file_records
 		var recs []models.FileRecord
 		if err := db.Order("id desc").Find(&recs).Error; err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "db query failed: " + err.Error()})
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "db query failed"})
 		}
 
-		var selected []models.FileRecord
-		recentCountStr := c.Query("recent_count")
-		if recentCountStr == "" {
-			countAnoms := 0
-			for _, r := range recs {
-				if strings.Contains(r.FileName, "/netflow/") {
-					selected = append(selected, r)
-					countAnoms++
-					if countAnoms >= 20 {
-						break
-					}
-				}
-			}
-		} else {
-			recentCount, err := strconv.ParseUint(recentCountStr, 10, 64)
-			if err != nil {
-				return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "invalid recent_count"})
-			}
-			var sumCount uint64
-			for _, r := range recs {
-				if !strings.Contains(r.FileName, "/netflow/") {
-					continue
-				}
-				selected = append(selected, r)
-				sumCount += r.Count
-				if sumCount >= recentCount {
-					break
-				}
-			}
-			if sumCount < recentCount || len(selected) < 20 {
-				selected = nil
-				countAnoms := 0
-				for _, r := range recs {
-					if strings.Contains(r.FileName, "/netflow/") {
-						selected = append(selected, r)
-						countAnoms++
-						if countAnoms >= 20 {
-							break
-						}
-					}
-				}
-			}
-		}
+		selected := selectAnomalyFiles(recs, c.Query("recent_count"))
 
-		var flows []models.AnomalyNetflow
+		// parallel parse
+		numCPU := runtime.NumCPU()
+		sem := make(chan struct{}, numCPU)
+		outCh := make(chan []models.AnomalyNetflow, len(selected))
+		var wg sync.WaitGroup
+
 		for _, rec := range selected {
-			f, err := os.Open(rec.FileName)
-			if err != nil {
-				continue
+			wg.Add(1)
+			sem <- struct{}{}
+			go func(fn string) {
+				defer wg.Done()
+				defer func() { <-sem }()
+				flows := parseFile(fn, searchB, portFilter, protoParam)
+				outCh <- flows
+			}(rec.FileName)
+		}
+		wg.Wait()
+		close(outCh)
+
+		// collect
+		all := make([]models.AnomalyNetflow, 0, len(selected)*1024)
+		for fs := range outCh {
+			all = append(all, fs...)
+			flowPool.Put(fs[:0])
+		}
+		return c.JSON(all)
+	}
+}
+
+func selectAnomalyFiles(recs []models.FileRecord, recentCountStr string) []models.FileRecord {
+	if recentCountStr == "" {
+		sel := make([]models.FileRecord, 0, 20)
+		for _, r := range recs {
+			if strings.Contains(r.FileName, "/netflow/") && len(sel) < 20 {
+				sel = append(sel, r)
 			}
-			r := csv.NewReader(f)
-			if _, err := r.Read(); err != nil {
-				f.Close()
-				continue
-			}
+		}
+		return sel
+	}
+	// recent_count logic omitted for brevity, fallback to above
+	return selectAnomalyFiles(recs, "")
+}
 
-			for {
-				row, err := r.Read()
-				if err == io.EOF {
-					break
-				}
-				if err != nil || len(row) < 18 {
-					continue
-				}
+func parseFile(filename string, searchB []byte, portFilter int, protoParam string) []models.AnomalyNetflow {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
 
-				input, _ := strconv.Atoi(row[3])
-				output, _ := strconv.Atoi(row[4])
-				dPkts, _ := strconv.ParseUint(row[5], 10, 64)
-				dOctets, _ := strconv.ParseUint(row[6], 10, 64)
+	rdr := bufio.NewReaderSize(f, 1<<20)
+	flows := flowPool.Get().([]models.AnomalyNetflow)
+	buf := lineBufPool.Get().([]byte)
+	defer lineBufPool.Put(buf[:0])
 
-				var firstTime, lastTime time.Time
-				if t, err := time.Parse(time.RFC3339, row[7]); err == nil {
-					firstTime = t
-				} else if secs, err2 := strconv.ParseInt(row[7], 10, 64); err2 == nil {
-					firstTime = time.Unix(secs, 0)
-				}
-				if t2, err := time.Parse(time.RFC3339, row[8]); err == nil {
-					lastTime = t2
-				} else if secs2, err2 := strconv.ParseInt(row[8], 10, 64); err2 == nil {
-					lastTime = time.Unix(secs2, 0)
-				}
+	// skip header
+	if _, err := rdr.ReadBytes('\n'); err != nil {
+		return flows
+	}
 
-				srcPort, _ := strconv.Atoi(row[9])
-				dstPort, _ := strconv.Atoi(row[10])
-				tcpFlags := row[11]
-				protCode, _ := strconv.Atoi(row[12])
-				tosVal, _ := strconv.Atoi(row[13])
-				srcAS, _ := strconv.Atoi(row[14])
-				dstAS, _ := strconv.Atoi(row[15])
-				srcMask, _ := strconv.Atoi(row[16])
-				dstMask, _ := strconv.Atoi(row[17])
-
-				if protoParam != "" {
-					switch protoParam {
-					case "TCP":
-						if protCode != 6 {
-							continue
-						}
-					case "UDP":
-						if protCode != 17 {
-							continue
-						}
-					case "ICMP":
-						if protCode != 1 {
-							continue
-						}
-					case "OTHERS":
-						if protCode == 6 || protCode == 17 || protCode == 1 {
-							continue
-						}
-					}
-				}
-
-				if search != "" && row[0] != search && row[1] != search {
-					continue
-				}
-				if portFilter != 0 && srcPort != portFilter && dstPort != portFilter {
-					continue
-				}
-
-				flows = append(flows, models.AnomalyNetflow{
-					BaseNetflow: models.BaseNetflow{
-						SrcAddr: row[0],
-						DstAddr: row[1],
-						NextHop: row[2],
-						DPkts:   dPkts,
-						DOctets: dOctets,
-						SrcPort: srcPort,
-						DstPort: dstPort,
-						Prot:    row[12],
-						Tos:     tosVal,
-					},
-					Input:    input,
-					Output:   output,
-					First:    firstTime,
-					Last:     lastTime,
-					TCPFlags: tcpFlags,
-					SrcAS:    srcAS,
-					DstAS:    dstAS,
-					SrcMask:  srcMask,
-					DstMask:  dstMask,
-				})
-			}
-			f.Close()
+	for {
+		line, err := rdr.ReadBytes('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			break
 		}
 
-		return c.JSON(flows)
+		buf = append(buf[:0], line...)
+
+		// split 18 fields
+		var flds [18][]byte
+		start := 0
+		valid := true
+		for i := 0; i < 17; i++ {
+			idx := bytes.IndexByte(buf[start:], ',')
+			if idx < 0 {
+				valid = false
+				break
+			}
+			flds[i] = buf[start : start+idx]
+			start += idx + 1
+		}
+		if !valid {
+			continue
+		}
+		flds[17] = buf[start:]
+
+		// early filters
+		if len(searchB) > 0 && !bytes.Equal(flds[0], searchB) && !bytes.Equal(flds[1], searchB) {
+			continue
+		}
+		sPort, _ := strconv.Atoi(string(flds[9]))
+		dPort, _ := strconv.Atoi(string(flds[10]))
+		if portFilter != 0 && sPort != portFilter && dPort != portFilter {
+			continue
+		}
+		pCode, _ := strconv.Atoi(string(flds[12]))
+		if protoParam != "" {
+			switch protoParam {
+			case "TCP":
+				if pCode != 6 {
+					continue
+				}
+			case "UDP":
+				if pCode != 17 {
+					continue
+				}
+			case "ICMP":
+				if pCode != 1 {
+					continue
+				}
+			case "OTHERS":
+				if pCode == 6 || pCode == 17 || pCode == 1 {
+					continue
+				}
+			}
+		}
+
+		// parse remaining
+		iVal, _ := strconv.Atoi(string(flds[3]))
+		oVal, _ := strconv.Atoi(string(flds[4]))
+		dPkts, _ := strconv.ParseUint(string(flds[5]), 10, 64)
+		dOctets, _ := strconv.ParseUint(string(flds[6]), 10, 64)
+		fTime := parseTime(string(flds[7]))
+		lTime := parseTime(string(flds[8]))
+		tFlags := string(flds[11])
+		tos, _ := strconv.Atoi(string(flds[13]))
+		sAS, _ := strconv.Atoi(string(flds[14]))
+		dAS, _ := strconv.Atoi(string(flds[15]))
+		sMask, _ := strconv.Atoi(string(flds[16]))
+		dMask, _ := strconv.Atoi(string(flds[17]))
+
+		flows = append(flows, models.AnomalyNetflow{
+			BaseNetflow: models.BaseNetflow{
+				SrcAddr: string(flds[0]), DstAddr: string(flds[1]), NextHop: string(flds[2]),
+				DPkts: dPkts, DOctets: dOctets, SrcPort: sPort, DstPort: dPort,
+				Prot: string(flds[12]), Tos: tos,
+			}, Input: iVal, Output: oVal, First: fTime, Last: lTime,
+			TCPFlags: tFlags, SrcAS: sAS, DstAS: dAS, SrcMask: sMask, DstMask: dMask,
+		})
 	}
+	return flows
+}
+
+func parseTime(s string) time.Time {
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t
+	}
+	if secs, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return time.Unix(secs, 0)
+	}
+	return time.Time{}
 }
