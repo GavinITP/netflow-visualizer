@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import NetworkChart from "../components/NetworkChart.svelte";
+  import NetworkChart from "../components/TotalFlowCountChart.svelte";
   import ProtocolChart from "../components/ProtocolChart.svelte";
   import StatCard from "../components/StatCard.svelte";
-  import AnomalyTable from "../components/AnomalyTable.svelte";
+  import TotalFlowCountChart from "../components/TotalFlowCountChart.svelte";
 
   const BASE = import.meta.env.VITE_APP_BASE_URL;
 
@@ -21,15 +21,26 @@
     active_alert: 0,
     uptime: { hours: 0, minutes: 0, seconds: 0 },
     protocol_distribution: {
-      TCP: 200000,
-      UDP: 150000,
-      ICMP: 50000,
-      Others: 10000,
+      TCP: 0,
+      UDP: 0,
+      ICMP: 0,
+      Others: 0,
     },
   };
   let error: string | null = null;
 
-  let packetHistory: { time: string; count: number }[] = [];
+  let packetHistory: { time: string; count: number }[] = [
+    // { time: "12:00:00", count: 12 },
+    // { time: "12:01:00", count: 19 },
+    // { time: "12:02:00", count: 7 },
+    // { time: "12:03:00", count: 14 },
+    // { time: "12:04:00", count: 22 },
+    // { time: "12:05:00", count: 18 },
+    // { time: "12:06:00", count: 25 },
+    // { time: "12:07:00", count: 9 },
+    // { time: "12:08:00", count: 16 },
+    // { time: "12:09:00", count: 20 },
+  ];
 
   let netflows: any[] = [];
 
@@ -83,22 +94,20 @@
       bgColor: "#DBEAFE",
     },
     {
-      title: "Packets / Second",
+      title: "Total Bytes (dOctets)",
       value: stats.packets_per_second,
       iconPath: "/traffic-rate.svg",
       bgColor: "#DCFCE7",
     },
     {
-      title: "Active Alerts",
+      title: "Total Flow Count",
       value: stats.active_alert,
       iconPath: "/crisis-alert.svg",
       bgColor: "#FEF9C3",
     },
     {
-      title: "Uptime",
-      value: `${stats.uptime.hours.toString().padStart(2, "0")}:${stats.uptime.minutes
-        .toString()
-        .padStart(2, "0")}:${stats.uptime.seconds.toString().padStart(2, "0")}`,
+      title: "Anomaly Flow Count",
+      value: null,
       iconPath: "/uptime.svg",
       bgColor: "#F3E8FF",
     },
@@ -121,13 +130,13 @@
 </div>
 
 <section class="my-10 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
-  <!-- Anomaly Network Graph -->
+  <!-- Total Flow Count Chart -->
   <div
     class="h-[500px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
   >
-    <h2 class="text-xl font-semibold">Anomaly Network Graph</h2>
+    <h2 class="text-xl font-semibold">Total Flow Count Chart</h2>
 
-    <NetworkChart {packetHistory} />
+    <TotalFlowCountChart {packetHistory} />
   </div>
 
   <!-- Protocol Distribution -->

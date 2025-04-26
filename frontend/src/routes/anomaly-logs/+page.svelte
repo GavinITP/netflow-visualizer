@@ -3,20 +3,18 @@
   import AnomalyTable from "../../components/AnomalyTable.svelte";
 
   let ip = "";
+  let recentCount = "";
   let port = "";
   let protocol = "";
-  let dateFrom = "";
-  let dateTo = "";
 
   let tableData: any[] = [];
 
   async function loadTable() {
     const params = new URLSearchParams();
     if (ip) params.set("search", ip);
+    if (recentCount) params.set("recent_count", recentCount);
     if (port) params.set("port", port);
     if (protocol) params.set("protocol", protocol);
-    if (dateFrom) params.set("from", new Date(dateFrom).toISOString());
-    if (dateTo) params.set("to", new Date(dateTo).toISOString());
 
     const url = `http://${import.meta.env.VITE_APP_BASE_URL}/api/netflows?${params.toString()}`;
     const res = await fetch(url);
@@ -51,6 +49,20 @@
     />
   </div>
 
+  <!-- Recent Count -->
+  <div class="flex w-32 flex-col">
+    <label for="recent-count" class="mb-1 text-sm font-medium"
+      >Recent count</label
+    >
+    <input
+      id="recent-count"
+      type="number"
+      bind:value={recentCount}
+      placeholder="e.g. 1000000"
+      class="rounded-lg border border-gray-400 px-3 py-2 focus:border-blue-300 focus:ring"
+    />
+  </div>
+
   <!-- Port -->
   <div class="flex w-32 flex-col">
     <label for="port" class="mb-1 text-sm font-medium">Port</label>
@@ -74,29 +86,8 @@
       <option value="">All</option>
       <option value="TCP">TCP</option>
       <option value="UDP">UDP</option>
+      <option value="OTHERS">Others</option>
     </select>
-  </div>
-
-  <!-- Date From -->
-  <div class="flex flex-col">
-    <label for="dateFrom" class="mb-1 text-sm font-medium">Date From</label>
-    <input
-      id="dateFrom"
-      type="date"
-      bind:value={dateFrom}
-      class="rounded-lg border border-gray-400 px-3 py-2 focus:border-blue-300 focus:ring"
-    />
-  </div>
-
-  <!-- Date To -->
-  <div class="flex flex-col">
-    <label for="dateTo" class="mb-1 text-sm font-medium">Date To</label>
-    <input
-      id="dateTo"
-      type="date"
-      bind:value={dateTo}
-      class="rounded-lg border border-gray-400 px-3 py-2 focus:border-blue-300 focus:ring"
-    />
   </div>
 
   <!-- Search Button -->
