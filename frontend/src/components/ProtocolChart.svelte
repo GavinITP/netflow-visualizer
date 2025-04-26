@@ -13,7 +13,7 @@
 
   let labels = $derived(Object.keys(protocolData));
   let values = $derived(
-    Object.values(protocolData).map((v) => Math.round(Number(v) * 100)),
+    Object.values(protocolData).map((v) => Number(v) * 100),
   );
 
   const baseColors = ["#A593E0", "#FFC1F0", "#F0B3C7", "#FFDA91"];

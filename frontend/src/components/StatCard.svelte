@@ -11,15 +11,15 @@
 >
   <div class="flex items-center gap-4">
     <div
-      class="flex h-[56px] w-[56px] items-center justify-center rounded-full"
+      class="flex h-[48px] w-[48px] items-center justify-center rounded-full"
       style={"background-color: " + bgColor}
     >
-      <img src={iconPath} alt={title} class="h-6 w-6" />
+      <img src={iconPath} alt={title} class="h-5 w-5" />
     </div>
 
     <div class="flex flex-col justify-between">
       <p class="text-gray text-sm font-bold">{title}</p>
-      <p class="text-2xl font-bold">{formatValue(value)}</p>
+      <p class="text-xl font-bold">{formatValue(value)}</p>
     </div>
   </div>
 </div>

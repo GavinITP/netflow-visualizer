@@ -15,4 +15,5 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	api.Get("/anomaly-logs", controllers.GetAnomalyLogs(db))
 	api.Get("/overview", controllers.GetOverviewStats(db))
+	api.Get("/overview-flow-count", controllers.GetFlowHistory(db))
 }

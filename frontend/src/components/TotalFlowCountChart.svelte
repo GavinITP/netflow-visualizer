@@ -25,6 +25,7 @@
 
   // Sample data: recent 5 flow counts
   export let packetHistory: { time: string; count: number }[];
+  $: console.log(packetHistory);
 
   // Chart.js data and configuration
   const data: ChartConfiguration<"bar">["data"] = {
@@ -49,7 +50,7 @@
       plugins: {
         title: {
           display: true,
-          text: "Recent Flow Count (Last 10 Minutes)",
+          text: "Recent Flow Count (Recent 10 Minutes)",
         },
         legend: {
           display: false,
