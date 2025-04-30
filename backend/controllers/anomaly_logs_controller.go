@@ -89,9 +89,9 @@ func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 
 func selectAnomalyFiles(recs []models.FileRecord, recentCountStr string) []models.FileRecord {
 	if recentCountStr == "" {
-		sel := make([]models.FileRecord, 0, 20)
+		sel := make([]models.FileRecord, 0, 10)
 		for _, r := range recs {
-			if strings.Contains(r.FileName, "/netflow/netflow/") && len(sel) < 20 {
+			if strings.Contains(r.FileName, "/netflow/netflow/") && len(sel) < 10 {
 				sel = append(sel, r)
 			}
 		}
