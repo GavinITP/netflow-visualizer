@@ -44,7 +44,7 @@ func sendOverviewOnce(db *gorm.DB, conn *websocket.Conn, lastPtr *overviewRow, f
 		  SUM(sum_dOctets) AS total_bytes,
 		  SUM(sum_dPkts)   AS total_packets,
 		  SUM(count)       AS total_flow_count,
-		  SUM(CASE WHEN file_name LIKE '%/netflow/%' THEN count ELSE 0 END) AS anomaly_flow_count,
+		  SUM(CASE WHEN file_name LIKE '%/netflow/netflow/%' THEN count ELSE 0 END) AS anomaly_flow_count,
 		  SUM(prot_tcp_count)  AS tcp_sum,
 		  SUM(prot_udp_count)  AS udp_sum,
 		  SUM(prot_icmp_count) AS icmp_sum,
