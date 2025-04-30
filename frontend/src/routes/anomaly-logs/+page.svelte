@@ -2,7 +2,7 @@
   import AnomalyTable from "../../components/AnomalyTable.svelte";
 
   let ip = "";
-  let recentCount = "";
+  let recentCount = "50";
   let port = "";
   let protocol = "";
 
@@ -86,13 +86,16 @@
     <label for="recent-count" class="mb-1 text-sm font-medium"
       >Recent Count</label
     >
-    <input
+    <select
       id="recent-count"
-      type="number"
       bind:value={recentCount}
-      placeholder="e.g. 10203000"
       class="rounded-lg border border-gray-400 px-3 py-2 focus:border-blue-300 focus:ring"
-    />
+    >
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="500">500</option>
+      <option value="1000">1000</option>
+    </select>
   </div>
 
   <!-- Port -->
@@ -138,6 +141,8 @@
 
   {#if loading}
     <p class="py-4 text-center">Loading…</p>
+  {:else if tableData.length === 0}
+    <p class="py-4 text-center text-gray-600">No results found</p>
   {:else if error}
     <p class="py-4 text-center text-red-600">{error}</p>
   {:else}

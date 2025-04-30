@@ -39,7 +39,7 @@
       </ul>
     </div>
 
-    <div
+    <!-- <div
       class="flex cursor-pointer items-center gap-3 border-t border-gray-200 p-4 hover:bg-[#f2f2f2]"
     >
       <img src="/account.svg" alt="User" class="h-8 w-8 rounded-full" />
@@ -49,6 +49,6 @@
         </p>
         <p class="text-xs text-gray-500">Admin</p>
       </a>
-    </div>
+    </div> -->
   </div>
 </aside>
