@@ -91,7 +91,7 @@ func selectAnomalyFiles(recs []models.FileRecord, recentCountStr string) []model
 	if recentCountStr == "" {
 		sel := make([]models.FileRecord, 0, 20)
 		for _, r := range recs {
-			if strings.Contains(r.FileName, "/netflow/") && len(sel) < 20 {
+			if strings.Contains(r.FileName, "/netflow/netflow/") && len(sel) < 20 {
 				sel = append(sel, r)
 			}
 		}
