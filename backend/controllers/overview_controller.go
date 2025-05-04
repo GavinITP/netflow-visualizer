@@ -51,7 +51,7 @@ func sendOverviewOnce(db *gorm.DB, conn *websocket.Conn, lastPtr *overviewRow, f
 		  SUM(prot_other_count) AS other_sum
 		FROM (
 		  SELECT * FROM file_records
-		  ORDER BY id DESCF
+		  ORDER BY id DESC
 		) AS latest
 	`).Scan(&row)
 

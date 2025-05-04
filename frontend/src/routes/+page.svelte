@@ -25,21 +25,12 @@
 
   let packetHistory: { time: string; count: number }[] = [];
 
-  let netflows: any[] = [];
-
   onMount(() => {
-    const netflowWs = new WebSocket(`ws://${BASE}/api/netflows`);
-    netflowWs.addEventListener("message", (e) => {
-      try {
-        netflows = JSON.parse(e.data);
-      } catch {}
-    });
-    netflowWs.addEventListener("error", () => {});
-
     const overviewWs = new WebSocket(`ws://${BASE}/api/overview`);
     overviewWs.addEventListener("message", (e) => {
       try {
         stats = JSON.parse(e.data);
+        console.log(stats);
         error = null;
       } catch {
         error = "Malformed overview data";
@@ -63,7 +54,6 @@
     });
 
     return () => {
-      netflowWs.close();
       overviewWs.close();
       flowWs.close();
     };
