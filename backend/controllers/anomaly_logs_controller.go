@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,7 +24,6 @@ var (
 
 func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-
 		search := c.Query("search")
 		searchB := []byte(search)
 
@@ -51,57 +49,64 @@ func GetAnomalyLogs(db *gorm.DB) fiber.Handler {
 		if err := db.Order("id desc").Find(&recs).Error; err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "db query failed"})
 		}
+		selected := selectAnomalyFiles(recs)
 
-		selected := selectAnomalyFiles(recs, c.Query("recent_count"))
+		all := make([]models.AnomalyNetflow, 0, 1024)
 
-		numCPU := runtime.NumCPU()
-		sem := make(chan struct{}, numCPU)
-		outCh := make(chan []models.AnomalyNetflow, len(selected))
-		var wg sync.WaitGroup
+		limit := 0
+		if rc := c.Query("recent_count"); rc != "" {
+			if v, err := strconv.Atoi(rc); err == nil && v > 0 {
+				limit = v
+			}
+		}
 
 		for _, rec := range selected {
-			wg.Add(1)
-			sem <- struct{}{}
-			go func(fn string) {
-				defer wg.Done()
-				defer func() { <-sem }()
-				outCh <- parseFile(fn, searchB, portFilter, protoParam)
-			}(rec.FileName)
-		}
-		wg.Wait()
-		close(outCh)
+			remaining := 0
+			if limit > 0 {
+				remaining = limit - len(all)
+				if remaining <= 0 {
+					break
+				}
+			}
 
-		all := make([]models.AnomalyNetflow, 0, len(selected)*1024)
-		for fs := range outCh {
-			all = append(all, fs...)
-			flowPool.Put(fs[:0])
-		}
+			flows := parseFile(rec.FileName, searchB, portFilter, protoParam, remaining)
+			all = append(all, flows...)
+			flowPool.Put(flows[:0])
 
-		if rc := c.Query("recent_count"); rc != "" {
-			if limit, err := strconv.Atoi(rc); err == nil && limit > 0 && len(all) > limit {
+			if limit > 0 && len(all) >= limit {
 				all = all[:limit]
+				break
 			}
 		}
 
-		return c.JSON(all)
-	}
-}
-
-func selectAnomalyFiles(recs []models.FileRecord, recentCountStr string) []models.FileRecord {
-	if recentCountStr == "" {
-		sel := make([]models.FileRecord, 0, 10)
-		for _, r := range recs {
-			if strings.Contains(r.FileName, "/netflow/netflow/") && len(sel) < 10 {
-				sel = append(sel, r)
-			}
+		trimmed := make([]fiber.Map, 0, len(all))
+		for _, f := range all {
+			trimmed = append(trimmed, fiber.Map{
+				"srcaddr": f.SrcAddr,
+				"srcport": f.SrcPort,
+				"dstaddr": f.DstAddr,
+				"dstport": f.DstPort,
+				"prot":    f.Prot,
+				"nexthop": f.NextHop,
+				"dPkts":   f.DPkts,
+				"dOctets": f.DOctets,
+			})
 		}
-		return sel
+		return c.JSON(trimmed)
 	}
-
-	return selectAnomalyFiles(recs, "")
 }
 
-func parseFile(filename string, searchB []byte, portFilter int, protoParam string) []models.AnomalyNetflow {
+func selectAnomalyFiles(recs []models.FileRecord) []models.FileRecord {
+	sel := make([]models.FileRecord, 0, 10)
+	for _, r := range recs {
+		if strings.Contains(r.FileName, "/netflow/netflow/") && len(sel) < 10 {
+			sel = append(sel, r)
+		}
+	}
+	return sel
+}
+
+func parseFile(filename string, searchB []byte, portFilter int, protoParam string, limit int) []models.AnomalyNetflow {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil
@@ -118,6 +123,10 @@ func parseFile(filename string, searchB []byte, portFilter int, protoParam strin
 	}
 
 	for {
+		if limit > 0 && len(flows) >= limit {
+			break
+		}
+
 		line, err := rdr.ReadBytes('\n')
 		if err == io.EOF {
 			break

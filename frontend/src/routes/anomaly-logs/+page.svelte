@@ -10,17 +10,68 @@
   let loading = false;
   let error: string | null = null;
 
+  // Validation state
+  let ipError = false;
+  let portError = false;
+
   const BASE = import.meta.env.VITE_APP_BASE_URL;
   const TIMEOUT_MS = 20000;
   const MAX_ROWS = 1000;
 
+  function isValidIp(ip: string): boolean {
+    const regex =
+      /^(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})(\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})){3}$/;
+    return regex.test(ip);
+  }
+
+  function ipToInt(ip: string): number {
+    return (
+      ip
+        .split(".")
+        .reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0
+    );
+  }
+
+  function intToIp(int: number | string): string {
+    const num = typeof int === "string" ? parseInt(int, 10) : int;
+    return [
+      (num >>> 24) & 255,
+      (num >>> 16) & 255,
+      (num >>> 8) & 255,
+      num & 255,
+    ].join(".");
+  }
+
   async function loadTable() {
-    loading = true;
+    loading = false;
     error = null;
     tableData = [];
 
+    ipError = false;
+    portError = false;
+
+    // Validate IP
+    if (ip && !isValidIp(ip)) {
+      ipError = true;
+      error = "Invalid IP address format.";
+      return;
+    }
+
+    // Validate Port
+    const portNumber = Number(port);
+    if (port && (isNaN(portNumber) || portNumber < 1 || portNumber > 65535)) {
+      portError = true;
+      error = "Port must be a number between 1 and 65535.";
+      return;
+    }
+
+    loading = true;
+
     const params = new URLSearchParams();
-    if (ip) params.set("search", ip);
+    if (ip) {
+      const ipInt = ipToInt(ip);
+      params.set("search", ipInt.toString());
+    }
     if (recentCount) params.set("recent_count", recentCount);
     if (port) params.set("port", port);
     if (protocol) params.set("protocol", protocol);
@@ -40,22 +91,23 @@
 
       const data = await res.json();
       if (Array.isArray(data)) {
-        if (data.length > MAX_ROWS) {
-          tableData = data.slice(0, MAX_ROWS);
-          // error = `Response too large; showing first ${MAX_ROWS} rows.`;
-        } else {
-          tableData = data;
-        }
+        const processed = data.map((entry) => ({
+          ...entry,
+          srcaddr: intToIp(entry.srcaddr),
+          dstaddr: intToIp(entry.dstaddr),
+          nexthop: intToIp(entry.nexthop),
+        }));
+
+        tableData = processed.slice(0, MAX_ROWS);
       } else {
         error = "Unexpected response format";
       }
     } catch (e: any) {
       clearTimeout(timeoutId);
-      if (e.name === "AbortError") {
-        error = "Request timed out";
-      } else {
-        error = `Fetch error: ${e.message}`;
-      }
+      error =
+        e.name === "AbortError"
+          ? "Request timed out"
+          : `Fetch error: ${e.message}`;
     } finally {
       loading = false;
     }
@@ -80,8 +132,16 @@
       type="text"
       bind:value={ip}
       placeholder="e.g. 192.168.1.1"
-      class="rounded-lg border border-gray-400 px-3 py-2 focus:border-blue-300 focus:ring"
+      class="rounded-lg border px-3 py-2 focus:ring
+        {ipError
+        ? 'border-red-500 focus:border-red-500'
+        : 'border-gray-400 focus:border-blue-300'}"
     />
+    {#if ipError}
+      <span class="mt-1 text-sm text-red-600"
+        >Please enter a valid IPv4 address.</span
+      >
+    {/if}
   </div>
 
   <!-- Recent Count -->
@@ -109,8 +169,16 @@
       type="number"
       bind:value={port}
       placeholder="e.g. 80"
-      class="rounded-lg border border-gray-400 px-3 py-2 focus:border-blue-300 focus:ring"
+      class="rounded-lg border px-3 py-2 focus:ring
+        {portError
+        ? 'border-red-500 focus:border-red-500'
+        : 'border-gray-400 focus:border-blue-300'}"
     />
+    {#if portError}
+      <span class="mt-1 text-sm text-red-600"
+        >Port must be between 1 and 65535.</span
+      >
+    {/if}
   </div>
 
   <!-- Protocol -->
@@ -144,10 +212,10 @@
 
   {#if loading}
     <p class="py-4 text-center">Loading…</p>
-  {:else if tableData.length === 0}
-    <p class="py-4 text-center text-gray-600">No results found</p>
   {:else if error}
     <p class="py-4 text-center text-red-600">{error}</p>
+  {:else if tableData.length === 0}
+    <p class="py-4 text-center text-gray-600">No results found</p>
   {:else}
     <AnomalyTable {tableData} />
   {/if}
