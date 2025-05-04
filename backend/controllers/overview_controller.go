@@ -52,7 +52,6 @@ func sendOverviewOnce(db *gorm.DB, conn *websocket.Conn, lastPtr *overviewRow, f
 		FROM (
 		  SELECT * FROM file_records
 		  ORDER BY id DESC
-		  LIMIT 10
 		) AS latest
 	`).Scan(&row)
 

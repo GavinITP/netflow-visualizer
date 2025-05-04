@@ -43,10 +43,11 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
       plugins: {
         title: {
           display: true,
-          text: "Recent Flow Count (Recent 10 Minutes)",
+          text: "Recent Flow Count (10 Seconds)",
         },
         legend: {
           display: false,

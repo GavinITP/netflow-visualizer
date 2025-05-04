@@ -63,7 +63,10 @@
 </script>
 
 <h1 class="mb-4 text-4xl font-extrabold">Anomaly Traffic Logs</h1>
-<p class="text-gray">Access and analyze historical NetFlow traffic data</p>
+<p class="text-gray">
+  Access and analyze historical NetFlow traffic data from the 10 most recent CSV
+  files
+</p>
 
 <form
   class="my-10 flex flex-wrap gap-4 rounded-md bg-white p-4 shadow-md"

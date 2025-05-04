@@ -79,18 +79,6 @@
   let statCardData: StatCardData[];
   $: statCardData = [
     {
-      title: "Total Packets (dPkts)",
-      value: stats.total_packets,
-      iconPath: "/total-packets.svg",
-      bgColor: "#DBEAFE",
-    },
-    {
-      title: "Total Bytes (dOctets)",
-      value: stats.total_bytes,
-      iconPath: "/total-bytes.svg",
-      bgColor: "#DCFCE7",
-    },
-    {
       title: "Total Flow Count",
       value: stats.total_flow_count,
       iconPath: "total-flow-count.svg",
@@ -101,6 +89,18 @@
       value: stats.anomaly_flow_count,
       iconPath: "/anomaly-flow-count.svg",
       bgColor: "#F3E8FF",
+    },
+    {
+      title: "Total Packets (dPkts)",
+      value: stats.total_packets,
+      iconPath: "/total-packets.svg",
+      bgColor: "#DBEAFE",
+    },
+    {
+      title: "Total Bytes (dOctets)",
+      value: stats.total_bytes,
+      iconPath: "/total-bytes.svg",
+      bgColor: "#DCFCE7",
     },
   ];
 
@@ -122,14 +122,14 @@
 
 <section class="my-10 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
   <div
-    class="h-[500px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
+    class="h-[500px] rounded-md bg-white px-5 pb-10 pt-5 shadow-md transition-transform hover:scale-[1.01]"
   >
     <h2 class="text-xl font-semibold">Total Flow Count Chart</h2>
     <TotalFlowCountChart {packetHistory} />
   </div>
 
   <div
-    class="h-[500px] rounded-md bg-white px-5 pt-5 pb-10 shadow-md transition-transform hover:scale-[1.01]"
+    class="h-[500px] rounded-md bg-white px-5 pb-10 pt-5 shadow-md transition-transform hover:scale-[1.01]"
   >
     <h2 class="text-xl font-semibold">Protocol Distribution</h2>
     <ProtocolChart {protocolData} />
